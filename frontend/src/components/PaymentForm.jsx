@@ -5,6 +5,7 @@ import { generateStellarPaymentUri, availableMemoTypes } from "../utils/stellarU
 import { encodeMemo } from "../utils/stellarMemo";
 import { getStudent, getPaymentInstructions, getStudentPayments, getStudentBalance, getPaymentRefunds } from "../services/api";
 import DisputeForm from "./DisputeForm";
+import BlockchainStatusBadge from "./BlockchainStatusBadge";
 import { getErrorMessage } from "../utils/errorMessages";
 import { IconCopy, IconCheck, IconAlertTriangle, IconSearch, IconDownload } from "./Icons";
 
@@ -529,7 +530,15 @@ export default function PaymentForm({ initialStudentId = "" }) {
                           {p.assetCode || "XLM"}
                         </span>
                       </strong>
-                      <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: "0.375rem", flexWrap: "wrap", alignItems: "flex-start" }}>
+                          {/* Blockchain confirmation status — Issue #110 */}
+                          {p.status && (
+                            <BlockchainStatusBadge
+                              status={p.status}
+                              txHash={p.txHash}
+                            />
+                          )}
+                          {/* Fee validation badge (valid / overpaid / underpaid) */}
                           <span className={badge.cls}>{t(badge.key)}</span>
                           {refund && (
                             <span className={refundStatusStyles[refund.status]?.cls || "badge badge-neutral"}>

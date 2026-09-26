@@ -74,3 +74,85 @@ export function getPaymentStatusLabel(status) {
 export function isTerminalStatus(status) {
   return TERMINAL_STATUSES.includes(status);
 }
+
+/**
+ * Blockchain-specific metadata for each payment status — Issue #110.
+ *
+ * Fields:
+ *   icon        {string}  Icon identifier (matches Icons.jsx export names).
+ *   colorClass  {string}  CSS badge class suffix (e.g. 'success', 'danger').
+ *   description {string}  Short human-readable description.
+ *   isFinal     {boolean} True when the status will not change further.
+ *   isOnChain   {boolean} True when the payment has or will have an on-chain record.
+ */
+export const BLOCKCHAIN_STATUS_META = Object.freeze({
+  [PAYMENT_STATUS.PENDING]: {
+    icon: 'IconClock',
+    colorClass: 'warning',
+    description: 'Awaiting submission',
+    isFinal: false,
+    isOnChain: false,
+  },
+  [PAYMENT_STATUS.SUBMITTED]: {
+    icon: 'pulse',
+    colorClass: 'info',
+    description: 'Confirming on-chain',
+    isFinal: false,
+    isOnChain: true,
+  },
+  [PAYMENT_STATUS.SUCCESS]: {
+    icon: 'IconCheck',
+    colorClass: 'success',
+    description: 'Confirmed on Stellar',
+    isFinal: true,
+    isOnChain: true,
+  },
+  [PAYMENT_STATUS.FAILED]: {
+    icon: 'IconX',
+    colorClass: 'danger',
+    description: 'Transaction rejected',
+    isFinal: true,
+    isOnChain: true,
+  },
+  [PAYMENT_STATUS.DISPUTED]: {
+    icon: 'IconAlertTriangle',
+    colorClass: 'warning',
+    description: 'Disputed',
+    isFinal: false,
+    isOnChain: false,
+  },
+  [PAYMENT_STATUS.REFUNDED]: {
+    icon: null,
+    colorClass: 'accent',
+    description: 'Refunded',
+    isFinal: true,
+    isOnChain: false,
+  },
+  [PAYMENT_STATUS.INVALID]: {
+    icon: 'IconX',
+    colorClass: 'danger',
+    description: 'Invalid',
+    isFinal: true,
+    isOnChain: false,
+  },
+});
+
+/** Default meta returned for unknown/unrecognised statuses. */
+const DEFAULT_BLOCKCHAIN_META = Object.freeze({
+  icon: null,
+  colorClass: 'neutral',
+  description: 'Unknown',
+  isFinal: false,
+  isOnChain: false,
+});
+
+/**
+ * Returns the blockchain status metadata for the given status string.
+ * Falls back to a safe default for unknown values.
+ *
+ * @param {string} status
+ * @returns {{ icon: string|null, colorClass: string, description: string, isFinal: boolean, isOnChain: boolean }}
+ */
+export function getBlockchainStatusMeta(status) {
+  return BLOCKCHAIN_STATUS_META[status] ?? DEFAULT_BLOCKCHAIN_META;
+}
