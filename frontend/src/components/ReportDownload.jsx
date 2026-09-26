@@ -7,6 +7,8 @@ import {
 } from "./Icons";
 import PageHero, { StatCard } from "./PageHero";
 import { useTranslation } from "react-i18next";
+import useExportJob from "../hooks/useExportJob";
+import ExportProgressBanner from "./ExportProgressBanner";
 
 export default function ReportDownload() {
   const { t } = useTranslation();
@@ -18,9 +20,20 @@ export default function ReportDownload() {
   const [report, setReport]       = useState(null);
   const [error, setError]         = useState("");
   const [loading, setLoading]     = useState(false);
-  const [csvLoading, setCsvLoading] = useState(false);
   const [reportHistory, setReportHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  const {
+    jobState,
+    jobProgress,
+    jobError,
+    jobDownloadUrl,
+    jobExpiresAt,
+    startExport,
+    retryExport,
+    clearJob,
+    dismissJob,
+  } = useExportJob();
 
   useEffect(() => {
     loadReportHistory();
@@ -75,39 +88,58 @@ export default function ReportDownload() {
     }
   }
 
-  async function handleCsv() {
+  // Build the CSV download params from current filter state
+  function buildCsvParams() {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate)   params.endDate   = endDate;
     if (className) params.className = className;
     if (studentId) params.studentId = studentId;
     if (paymentStatus) params.paymentStatus = paymentStatus;
+    return params;
+  }
 
-    try {
-      setCsvLoading(true);
+  async function handleCsv() {
+    const params = buildCsvParams();
+    const filename =
+      startDate && endDate
+        ? `report-${startDate}_to_${endDate}.csv`
+        : "report-all-time.csv";
+
+    await startExport(async () => {
       const url = getReportCsvUrl(params);
-      const response = await fetch(url, {
-        credentials: "include",
-      });
+      const response = await fetch(url, { credentials: "include" });
       if (!response.ok) throw new Error(t("reports.downloadError"));
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      const filename =
-        startDate && endDate
-          ? `report-${startDate}_to_${endDate}.csv`
-          : "report-all-time.csv";
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      setError(t("reports.failedCsvPrefix") + (err.message || t("reports.failedCsvUnknown")));
-    } finally {
-      setCsvLoading(false);
-    }
+
+      // Stash the blobUrl + filename so the banner's Download button can use them
+      setPendingDownload({ blobUrl, filename });
+
+      // Return the blobUrl as the "download URL" stored in job state
+      return blobUrl;
+    });
+  }
+
+  // Holds the pending download metadata (blobUrl + filename) so the banner's
+  // Download button can trigger the browser save dialog.
+  const [pendingDownload, setPendingDownload] = useState({ blobUrl: null, filename: null });
+
+  function handleBannerDownload() {
+    // Use the stored blobUrl from the export or fall back to jobDownloadUrl
+    const { blobUrl, filename } = pendingDownload;
+    const href = blobUrl || jobDownloadUrl;
+    if (!href) return;
+
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = filename || "report.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Note: we intentionally do NOT revoke the blobUrl here so that
+    // repeated downloads within the expiry window still work.
   }
 
   const TABLE_COLS = [
@@ -126,6 +158,19 @@ export default function ReportDownload() {
         eyebrow={t("reports.eyebrow")}
         title={t("reports.title")}
         subtitle={t("reports.subtitle")}
+      />
+
+      {/* Export job progress banner — shown below hero, above filters */}
+      <ExportProgressBanner
+        jobState={jobState}
+        jobProgress={jobProgress}
+        jobError={jobError}
+        jobDownloadUrl={jobDownloadUrl}
+        jobExpiresAt={jobExpiresAt}
+        onDownload={handleBannerDownload}
+        onRetry={retryExport}
+        onClear={clearJob}
+        onDismiss={dismissJob}
       />
 
       {/* Filter form */}
@@ -239,27 +284,14 @@ export default function ReportDownload() {
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
               <button
                 onClick={handleCsv}
-                disabled={csvLoading}
+                disabled={jobState === "queued" || jobState === "running"}
                 className="btn btn-ghost btn-sm"
                 style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}
               >
-                {csvLoading ? (
-                  <>
-                    <div style={{
-                      width: "14px",
-                      height: "14px",
-                      border: "2px solid var(--text-muted)",
-                      borderTop: "2px solid var(--text-default)",
-                      borderRadius: "50%",
-                      animation: "spin 0.8s linear infinite",
-                    }} />
-                    <span>{t("reports.downloading")}</span>
-                  </>
-                ) : (
-                  <>
-                    <IconDownload size={14} /> {t("reports.downloadCsv")}
-                  </>
-                )}
+                <IconDownload size={14} />
+                {(jobState === "queued" || jobState === "running")
+                  ? t("reports.downloading")
+                  : t("reports.downloadCsv")}
               </button>
               {reportHistory.length > 0 && (
                 <button

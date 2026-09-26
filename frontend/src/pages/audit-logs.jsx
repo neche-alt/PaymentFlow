@@ -6,6 +6,7 @@ import {
 } from "../components/Icons";
 import PageHero from "../components/PageHero";
 import RequireAdmin from "../components/RequireAdmin";
+import DateRangeControl, { useTimezone } from "../components/DateRangeControl";
 import { useTranslation } from "react-i18next";
 
 function formatTimestamp(isoString, t) {
@@ -39,6 +40,7 @@ const ACTION_OPTIONS = Object.entries(ACTION_LABELS).map(([value, label]) => ({ 
 
 function AuditLogsContent() {
   const { t } = useTranslation();
+  const { timezone, setTimezone } = useTimezone();
   const [logs, setLogs]               = useState([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState(null);
@@ -283,28 +285,19 @@ function AuditLogsContent() {
               />
             </div>
 
-            <div>
-              <label className="al-filter-label">{t("auditLogs.filterFromLabel")}</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                className="al-filter-input"
-              />
-            </div>
-
-            <div>
-              <label className="al-filter-label">{t("auditLogs.filterToLabel")}</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                className="al-filter-input"
-              />
-            </div>
           </div>
 
-          {/* Alerts */}
+          {/* Date range picker with timezone indicator */}
+          <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
+            <DateRangeControl
+              startDate={startDate}
+              endDate={endDate}
+              timezone={timezone}
+              onRangeChange={(start, end) => { setStartDate(start); setEndDate(end); }}
+              onTimezoneChange={setTimezone}
+            />
+          </div>
+
           {error && (
             <div className="card-body">
               <div role="alert" className="alert alert-danger">
