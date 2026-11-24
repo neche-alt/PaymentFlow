@@ -1,0 +1,59 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundation/Design Tokens" />
+
+# Design Tokens
+
+PaymentFlow's design tokens are defined in `frontend/src/styles/tokens.css` as CSS custom properties.
+Every component references these variables — never raw hex values — so a brand update touches one file.
+
+## Colours
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--color-brand-primary` | `#059669` | Primary actions, links |
+| `--color-brand-secondary` | `#0d9488` | Secondary accents |
+| `--color-brand-cyan` | `#06b6d4` | Highlights, gradients |
+| `--color-success` | `#10b981` | Success states |
+| `--color-warning` | `#f59e0b` | Warning states |
+| `--color-danger` | `#f43f5e` | Error / destructive states |
+| `--color-info` | `#3b82f6` | Informational states |
+
+## Typography
+
+| Token | Value |
+|-------|-------|
+| `--font-sans` | Inter, Plus Jakarta Sans |
+| `--text-xs` | 12 px |
+| `--text-sm` | 13 px |
+| `--text-base` | 15 px |
+| `--text-lg` | 18 px |
+| `--text-xl` | 20 px |
+| `--text-2xl` | 24 px |
+
+## Spacing
+
+Spacing uses a 4 px base unit: `--space-1` = 4 px, `--space-2` = 8 px, … `--space-16` = 64 px.
+
+## Elevation
+
+| Token | Usage |
+|-------|-------|
+| `--shadow-xs` | Subtle lift (inputs) |
+| `--shadow-sm` | Cards, dropdowns |
+| `--shadow-md` | Popovers, elevated cards |
+| `--shadow-lg` | Modals, drawers |
+| `--shadow-glow` | Brand-coloured glow on CTAs |
+
+## Motion
+
+| Token | Duration | Easing |
+|-------|----------|--------|
+| `--transition-fast` | 100 ms | ease |
+| `--transition-base` | 160 ms | ease |
+| `--transition-slow` | 240 ms | ease |
+| `--transition-spring` | 200 ms | cubic-bezier spring |
+
+## Border Radius
+
+`--radius-sm` (8 px) → `--radius-md` (10 px) → `--radius-lg` (14 px) → `--radius-xl` (18 px) → `--radius-full` (9999 px)
