@@ -98,6 +98,16 @@ function idempotency(opts = {}) {
       });
     }
 
+    // Idempotency-Key must be a UUID v4 to prevent accidental key collisions
+    // from non-random client-generated values.
+    const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!UUID_V4_RE.test(rawKey.trim())) {
+      return res.status(400).json({
+        error: 'Idempotency-Key must be a valid UUID v4',
+        code: 'INVALID_IDEMPOTENCY_KEY_FORMAT',
+      });
+    }
+
     const scope = req.path;
     const canonicalKey = deriveIdempotencyKey(rawKey, scope);
     const fingerprint = fingerprintRequest(req.body);

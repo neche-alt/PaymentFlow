@@ -170,6 +170,17 @@ router.post(
   resolveSchool,
   createPaymentIntent,
 );
+
+// POST /api/payments — payment creation shorthand (aliases /intent with
+// idempotency enforcement). The Idempotency-Key header (UUID v4) is required;
+// duplicates return the cached 2xx response from the first successful call.
+router.post(
+  "/",
+  validateCreatePaymentIntent,
+  idempotency,
+  resolveSchool,
+  createPaymentIntent,
+);
 router.post(
   "/submit",
   validateSubmitTransaction,
